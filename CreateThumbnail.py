@@ -16,18 +16,13 @@ def resize_image(image_path, resized_path):
 
 def lambda_handler(event, context):
     queue = sqs.get_queue_by_name(QueueName='Logging')
-    for message in queue.receive_messages(MessageAttributeNames=['Author']):
-        author_text = ''
-        if message.message_attributes is not None:
-            author_name = message.message_attributes.get('Author').get('StringValue')
-            if author_name:
-                author_text = ' ({0})'.format(author_name)
-                bucket = 'ohhailambda'
-                key = 'tommyPuppet.jpg'
-                download_path = '/tmp/{}{}'.format(uuid.uuid4(), key)
-                upload_path = '/tmp/resized-{}'.format(key)
-                s3_client.download_file(bucket, key, download_path)
-                resize_image(download_path, upload_path)
-                s3_client.upload_file(upload_path, '{}resized'.format(bucket), key)
+    for message in queue.receive_messages():
+        bucket = 'ohhailambda'
+        key = 'tommyPuppet.jpg'
+        download_path = '/tmp/{}{}'.format(uuid.uuid4(), key)
+        upload_path = '/tmp/resized-{}'.format(key)
+        s3_client.download_file(bucket, key, download_path)
+        resize_image(download_path, upload_path)
+        s3_client.upload_file(upload_path, '{}resized'.format(bucket), key)
 
         message.delete()
